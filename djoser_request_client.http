@@ -1,0 +1,348 @@
+### Djoser Request Test
+
+# 以下の手順で Djoser のリクエストの確認を行えます。
+# 1. VsCode に RestClient を入れる。
+# 2. ファイル xxx.http を作成する。
+# 3. 当ファイルの記述を全て xxx.http に記載する。
+# 4. 当ファイルの各 URL 上にある「Send Request」をクリックする。
+
+
+
+### トークンの表記
+
+# uuuu: uid の値
+# tttt: token の値
+# rrrr: refresh の値
+# aaaa: access の値
+# aarr: access の値、または rrrr の値
+# atat: auth_token の値
+
+
+
+### ユーザーを登録する。
+# 有効化を促すメールが送信される。
+# 有効化を促すメールに uid と token を含んだ URL が記載されている。
+
+# リクエスト
+POST http://localhost:8888/api/auth/users/
+content-type: application/json
+Accept: application/json
+
+{
+    "name": "user1",
+    "email": "user1@example.com",
+    "password": "helloworld1",
+    "re_password": "helloworld1"
+}
+
+# レスポンス
+# {
+#   "name": "user1",
+#   "email": "user1@example.com",
+#   "id": 1
+# }
+
+
+
+### ユーザーを有効化する。
+# uid と token はユーザー登録時に送信されたメールの URL から取得する。
+# ユーザー有効化が完了したメールが送信される。
+
+POST http://localhost:8888/api/auth/users/activation/
+content-type: application/json
+Accept: application/json
+
+{
+    "uid": "uuuu",
+    "token": "tttt"
+}
+
+# レスポンス
+# 無し
+
+
+
+### ユーザー登録を再送信する。
+# uid と token はユーザー登録時に送信されたメールの URL から取得する。
+# 有効化を促すメールが送信される。
+# 有効化を促すメールに uid と token を含んだ URL が記載されている。
+
+# リクエスト
+POST http://localhost:8888/api/auth/users/resend_activation/
+content-type: application/json
+Accept: application/json
+
+{
+    "email": "user1@example.com",
+    "uid": "uuuu",
+    "token": "tttt"
+}
+
+# レスポンス
+# 無し
+
+
+
+### トークンを発行する。
+# 有効化されたユーザーのみ取得可能。
+
+# リクエスト
+POST http://localhost:8888/api/auth/jwt/create/
+content-type: application/json
+Accept: application/json
+
+{
+    "email": "user1@example.com",
+    "password": "helloworld1"
+}
+
+# レスポンス
+# {
+#     "refresh": "rrrr",
+#     "access": "aaaa"
+# }
+
+
+
+### リフレッシュトークンからアクセストークンを取得する。
+# 有効化されたユーザーのみ取得可能。
+
+# リクエスト
+POST http://localhost:8888/api/auth/jwt/refresh/
+content-type: application/json
+Accept: application/json
+
+{
+    "refresh": "rrrr"
+}
+
+# レスポンス
+# {
+#     "access": "aaaa"
+# }
+
+
+
+### トークンが有効か確認する。
+# token の値には access または refresh の値を指定する。
+# レスポンスが {} なら有効。
+
+# リクエスト
+POST http://localhost:8888/api/auth/jwt/verify/
+content-type: application/json
+Accept: application/json
+
+{
+    "token": "aarr"
+}
+
+# レスポンス
+# {}
+
+
+
+### 自身のユーザーの情報を取得する。
+# ヘッダの Authorization の JWT の後には access の値を指定する。
+
+# リクエスト
+GET http://localhost:8888/api/auth/users/me/
+content-type: application/json
+Accept: application/json
+Authorization: JWT aaaa
+
+# レスポンス
+# {
+#     "id": 1,
+#     "name": "user1",
+#     "email": "user1@example.com"
+# }
+
+
+
+### ユーザーの name を変更する。
+# ヘッダの Authorization の JWT の後には access の値を指定する。
+
+# リクエスト
+PATCH http://localhost:8888/api/auth/users/me/
+content-type: application/json
+Accept: application/json
+Authorization: JWT aaaa
+
+{
+    "name": "edited_name",
+    "email": "edited_email@example.com"
+}
+
+# レスポンス
+# {
+#     "id": 27,
+#     "name": "edited_name",
+#     "email": "edited_email@example.com"
+# }
+
+
+
+### ユーザー一覧を取得する。
+# ヘッダの Authorization の JWT の後には access の値を指定する。
+
+# リクエスト
+GET http://localhost:8888/api/auth/users/
+Authorization: JWT aaaa
+
+# レスポンス
+#  [
+#     {
+#         "id": 1,
+#         "name": "user1",
+#         "email": "user1@example.com"
+#     },
+#     {
+#         "id": 2,
+#         "name": "user2",
+#         "email": "user2@example.com"
+#     }
+# ]
+
+
+
+### Email リセットを申請する。
+# Email リセット申請のメールが送信される。
+
+# リクエスト
+POST http://localhost:8888/api/auth/users/reset_email/
+content-type: application/json
+
+{
+    "email": "user1@example.com"
+}
+
+# レスポンス
+# 無し
+
+
+
+### Email リセットを実行する。
+# Email リセット完了のメールが送信される。
+
+# リクエスト
+POST http://localhost:8888/api/auth/users/reset_email_confirm/
+content-type: application/json
+
+{
+    "uid": "uuuu",
+    "token": "tttt",
+    "new_email": "new_email@example.com",
+    "re_new_email": "new_email@example.com"
+}
+
+# レスポンス
+# 無し
+
+
+
+### パスワードを変更を変更する。
+# パスワード変更完了のメールが送信される。
+# ヘッダの Authorization の JWT の後には access の値を指定する。
+
+# リクエスト
+POST http://localhost:8888/api/auth/users/set_password/
+content-type: application/json
+Authorization: JWT aaaa
+
+{
+    "current_password": "helloworld1",
+    "new_password": "edited_helloworld1",
+    "re_new_password": "edited_helloworld1"
+}
+
+# レスポンス
+# 無し
+
+
+
+### パスワードリセット申請する。
+# パスワードリセット申請のメールが送信される。
+
+# リクエスト
+POST http://localhost:8888/api/auth/users/reset_password/
+content-type: application/json
+
+{
+    "email": "user1@example.com"
+}
+
+# レスポンス
+# 無し
+
+
+
+### パスワードリセットを実行する。
+# パスワードリセット完了のメールが送信される。
+
+# リクエスト
+POST http://localhost:8888/api/auth/users/reset_password_confirm/
+content-type: application/json
+
+{
+    "uid": "uuuu",
+    "token": "tttt",
+    "new_password": "edited_helloworld1"
+}
+
+# レスポンス
+# 無し
+
+
+
+### ユーザーを削除する。
+# ヘッダの Authorization の JWT の後には access の値を指定する。
+
+# リクエスト
+DELETE http://localhost:8888/api/auth/users/me/
+content-type: application/json
+Authorization: JWT aaaa
+
+{
+    "current_password": "helloworld1"
+}
+
+# レスポンス
+# 無し
+
+
+
+### ログインする。
+
+POST http://localhost:8888/api/auth/token/login/
+content-type: application/json
+
+{
+    "email": "user1@example.com",
+    "password": "helloworld1"
+}
+
+# レスポンス
+# {
+#     "auth_token": "atat"
+# }
+
+
+
+### ログアウトする。
+# ヘッダの Authorization の JWT の後には access の値を指定する。
+
+# リクエスト
+POST http://localhost:8888/api/auth/token/logout/
+content-type: application/json
+Authorization: JWT aaaa
+
+# レスポンス
+# 無し
+
+
+
+### アクセストークンが必要な自作API
+GET http://localhost:8888/api/hoge/
+content-type: application/json
+Authorization: JWT aaaa
+auth-token: atat
